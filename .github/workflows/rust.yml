@@ -24,6 +24,9 @@ jobs:
         wget -O "$tarball" https://downloads.getmonero.org/cli/monero-linux-x64-v0.18.2.2.tar.bz2
         tar xvaf "$tarball"
         sudo cp -r monero-*/* /usr/local/bin/
+    - name: Install solana cli for tests
+      run: |
+        sh -c "$(curl -sSfL https://release.solana.com/v1.16.1/install)"
     - name: Build contract
       run: make all-via-docker
     - name: Run auth_rust tests

@@ -83,6 +83,7 @@ pub enum AlgorithmType {
     Litecoin = 10,
     Cardano = 11,
     Monero = 12,
+    Solana = 13,
     OwnerLock = 0xFC,
 }
 
@@ -736,6 +737,9 @@ pub fn auth_builder(t: AlgorithmType, official: bool) -> result::Result<Box<dyn 
         }
         AlgorithmType::Monero => {
             return Ok(MoneroAuth::new());
+        }
+        AlgorithmType::Solana => {
+            return Ok(SolanaAuth::new());
         }
         AlgorithmType::OwnerLock => {
             return Ok(OwnerLockAuth::new());
@@ -1396,6 +1400,57 @@ impl Auth for MoneroAuth {
     fn get_sign_size(&self) -> usize {
         // #define MONERO_DATA_SIZE (MONERO_SIGNATURE_SIZE + 1 + MONERO_PUBKEY_SIZE * 2)
         64 + 1 + 32 * 2
+    }
+}
+
+#[derive(Clone)]
+pub struct SolanaAuth {
+    pub key_pair: Arc<solana_sdk::signer::keypair::Keypair>,
+}
+impl SolanaAuth {
+    pub fn new() -> Box<SolanaAuth> {
+        fn get_random_key_pair() -> solana_sdk::signer::keypair::Keypair {
+            let key: [u8; 64] = [
+                121, 214, 18, 82, 167, 45, 237, 61, 0, 92, 54, 190, 156, 122, 71, 32, 105, 1, 9,
+                97, 214, 115, 111, 12, 125, 191, 161, 20, 225, 225, 78, 210, 254, 235, 100, 66,
+                170, 188, 44, 135, 235, 245, 242, 54, 219, 31, 191, 212, 115, 252, 33, 68, 45, 175,
+                123, 170, 242, 121, 56, 21, 232, 242, 189, 130,
+            ];
+            let keypair =
+                solana_sdk::signer::keypair::Keypair::from_bytes(&key).expect("Create key pair");
+            keypair
+        }
+
+        let key_pair = get_random_key_pair();
+        let key_pair = Arc::new(key_pair);
+        Box::new(SolanaAuth { key_pair })
+    }
+}
+impl Auth for SolanaAuth {
+    fn get_pub_key_hash(&self) -> Vec<u8> {
+        use solana_sdk::signer::EncodableKeypair;
+        let pub_key: solana_sdk::pubkey::Pubkey = self.key_pair.encodable_pubkey();
+        let pub_key = pub_key.to_bytes();
+        Vec::from(&ckb_hash::blake2b_256(pub_key)[..20])
+    }
+    fn get_algorithm_type(&self) -> u8 {
+        AlgorithmType::Solana as u8
+    }
+    fn convert_message(&self, message: &[u8; 32]) -> H256 {
+        H256::from(message.clone())
+    }
+    fn sign(&self, msg: &H256) -> Bytes {
+        let mut signature: Vec<u8> = Vec::with_capacity(self.get_sign_size());
+        signature.copy_from_slice(msg.as_bytes());
+        signature.copy_from_slice(msg.as_bytes());
+        assert_eq!(self.get_sign_size(), signature.len());
+        let mut data = BytesMut::new();
+        data.put(signature.as_slice());
+        let bytes = data.freeze();
+        bytes
+    }
+    fn get_sign_size(&self) -> usize {
+        64
     }
 }
 
