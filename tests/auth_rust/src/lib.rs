@@ -1440,10 +1440,9 @@ impl Auth for SolanaAuth {
         H256::from(message.clone())
     }
     fn sign(&self, msg: &H256) -> Bytes {
-        let mut signature: Vec<u8> = Vec::with_capacity(self.get_sign_size());
-        signature.copy_from_slice(msg.as_bytes());
-        signature.copy_from_slice(msg.as_bytes());
+        let signature: Vec<u8> = msg.as_bytes().iter().chain(msg.as_bytes()).map(|x| *x).collect();
         assert_eq!(self.get_sign_size(), signature.len());
+        dbg!(hex::encode(&signature));
         let mut data = BytesMut::new();
         data.put(signature.as_slice());
         let bytes = data.freeze();
