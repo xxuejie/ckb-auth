@@ -945,7 +945,7 @@ __attribute__((visibility("default"))) int ckb_auth_validate(
         CHECK(err);
     } else if (auth_algorithm_id == AuthAlgorithmIdSolana) {
         err = verify(pubkey_hash, signature, signature_size, message,
-                     message_size, validate_signature_monero, convert_copy);
+                     message_size, validate_signature_solana, convert_copy);
         CHECK(err);
     } else if (auth_algorithm_id == AuthAlgorithmIdOwnerLock) {
         CHECK2(is_lock_script_hash_present(pubkey_hash), ERROR_MISMATCHED);
