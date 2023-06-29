@@ -73,6 +73,7 @@
 #define MONERO_KECCAK_SIZE 32
 #define SOLANA_PUBKEY_SIZE 32
 #define SOLANA_SIGNATURE_SIZE 64
+#define SOLANA_BLOCKHASH_SIZE 32
 
 enum AuthErrorCodeType {
     ERROR_NOT_IMPLEMENTED = 100,
@@ -506,6 +507,14 @@ exit:
     return err;
 }
 
+int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_len, const uint8_t *pub_key,
+    const uint8_t *blockhash) {
+    int err = 0;
+    CHECK2(signed_msg_len > 4, ERROR_INVALID_ARG);
+exit:
+    return err;
+}
+
 int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
                               size_t sig_len, const uint8_t *msg,
                               size_t msg_len, uint8_t *output,
@@ -516,12 +525,15 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
       0xfe, 0xeb, 0x64, 0x42, 0xaa, 0xbc, 0x2c, 0x87, 0xeb, 0xf5, 0xf2, 0x36, 0xdb, 0x1f, 0xbf, 0xd4, 0x73, 0xfc, 0x21, 0x44, 0x2d, 0xaf, 0x7b, 0xaa, 0xf2, 0x79, 0x38, 0x15, 0xe8, 0xf2, 0xbd, 0x82 };
 
     CHECK2(sig_len > SOLANA_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    CHECK2(msg_len == SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
     const uint8_t *signature_ptr = sig;
     const uint8_t *pub_key_ptr =  sig + SOLANA_SIGNATURE_SIZE;
     const uint8_t *signed_msg_ptr = sig + SOLANA_SIGNATURE_SIZE + SOLANA_PUBKEY_SIZE;
     size_t signed_msg_len = sig_len - SOLANA_SIGNATURE_SIZE - SOLANA_PUBKEY_SIZE;
 
     // TODO: validate signed_msg is from created from msg and pub key here.
+    CHECK(validate_solana_signed_message(signed_msg_ptr, signed_msg_len, pub_key_ptr, msg));
+
     hex_dump("msg", signed_msg_ptr, signed_msg_len, 0);
     hex_dump("pub_key", pub_key_ptr, SOLANA_PUBKEY_SIZE, 0);
     hex_dump("signature", signature_ptr, SOLANA_SIGNATURE_SIZE, 0);
