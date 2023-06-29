@@ -17,7 +17,7 @@ jobs:
         tarball=litecoin.tar.gz
         wget -O "$tarball" https://download.litecoin.org/litecoin-0.21.2.2/linux/litecoin-0.21.2.2-x86_64-linux-gnu.tar.gz
         tar xvzf "$tarball"
-        sudo cp -r litecoin-*/* /usr/local
+        sudo cp -r litecoin-*/* /usr/local/
     - name: Install monero wallet cli for tests
       run: |
         tarball=monero-wallet-cli.tar.gz
@@ -26,7 +26,10 @@ jobs:
         sudo cp -r monero-*/* /usr/local/bin/
     - name: Install solana cli for tests
       run: |
-        sh -c "$(curl -sSfL https://release.solana.com/v1.16.1/install)"
+        tarball=solana-release-x86_64-unknown-linux-gnu.tar.bz2
+        wget -O "$tarball" https://github.com/solana-labs/solana/releases/download/v1.16.1/solana-release-x86_64-unknown-linux-gnu.tar.bz2
+        tar xvaf "$tarball"
+        sudo cp -r solana-*/* /usr/local/
     - name: Build contract
       run: make all-via-docker
     - name: Run auth_rust tests
