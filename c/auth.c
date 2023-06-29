@@ -74,6 +74,7 @@
 #define SOLANA_PUBKEY_SIZE 32
 #define SOLANA_SIGNATURE_SIZE 64
 #define SOLANA_BLOCKHASH_SIZE 32
+#define SOLANA_MESSAGE_HEADER_SIZE 3
 
 enum AuthErrorCodeType {
     ERROR_NOT_IMPLEMENTED = 100,
@@ -395,21 +396,24 @@ size_t write_varint(uint8_t *dest, size_t n) {
 
 // Read uint16_t from varint buffer
 // See https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/short_vec.rs#L120-L148
-int read_varint_u16(const uint8_t *src, size_t src_size, uint16_t *result) {
+int read_varint_u16(uint8_t **src, size_t src_size, uint16_t *result) {
     size_t maximum_full_bytes = sizeof(uint16_t) * 8 / 7;
-    hex_dump("src", src, src_size, 0);
   
+    uint8_t *ptr = *src;
+    hex_dump("src", ptr, src_size, 0);
     uint16_t acc = 0;
     for (size_t i = 0; i <= maximum_full_bytes; i++) {
         if (i >= src_size) {
             return -1;
         }
-        uint8_t current_value = *(src + i);
+        uint8_t current_value = *ptr;
         size_t bits = (i < maximum_full_bytes) ? 7 : sizeof(uint16_t)*8 - maximum_full_bytes*7; 
         uint8_t maximum_value = (1 << bits) - 1;
         acc += ((uint16_t)(current_value & maximum_value) << (i*7));
         printf("%s: current_value %d, bits %d, maximum_value %d, acc %d\n", __func__, current_value, bits, maximum_value, acc);
+        ptr = ptr + 1;
         if (current_value < 0x80 && i < maximum_full_bytes) {
+            *src = ptr;
             *result = acc;
             return 0;
         } else if (i == maximum_full_bytes && current_value > maximum_value) {
@@ -417,6 +421,7 @@ int read_varint_u16(const uint8_t *src, size_t src_size, uint16_t *result) {
             return -2;
         }
     }
+    *src = ptr;
     *result = acc;
     return 0;
 }
@@ -542,11 +547,28 @@ int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_
     // [Transactions | Solana Docs](https://docs.solana.com/developing/programming-model/transactions)
     // See also
     // https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/message/legacy.rs#L90-L129
-    CHECK2(signed_msg_len > 4 + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    CHECK2(signed_msg_len > SOLANA_MESSAGE_HEADER_SIZE + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
     uint8_t num_signers = *signed_msg;
     uint16_t num_keys = 0;
-    CHECK2(read_varint_u16(signed_msg + 3, signed_msg_len - 3, &num_keys) == 0, ERROR_INVALID_ARG);
+    uint8_t *pub_key_ptr = (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE);
+    CHECK2(read_varint_u16(&pub_key_ptr, signed_msg_len - SOLANA_MESSAGE_HEADER_SIZE, &num_keys) == 0, ERROR_INVALID_ARG);
     printf("%s: num_signers %x, num_keys %x\n", __func__, num_signers, num_keys);
+    hex_dump("pub keys", pub_key_ptr, SOLANA_PUBKEY_SIZE*num_keys, 0);
+    size_t pub_key_size = (pub_key_ptr - (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE)) + SOLANA_PUBKEY_SIZE * num_keys;
+    printf("%s: pub_key_size %x, num_keys %x\n", __func__, pub_key_size, num_keys);
+    CHECK2(signed_msg_len > SOLANA_MESSAGE_HEADER_SIZE + pub_key_size + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    const uint8_t *blockhash_ptr = signed_msg + SOLANA_MESSAGE_HEADER_SIZE + pub_key_size;
+    hex_dump("blockhash_ptr", blockhash_ptr, SOLANA_BLOCKHASH_SIZE, 0);
+    hex_dump("blockhash", blockhash, SOLANA_BLOCKHASH_SIZE, 0);
+    // TODO: properly compare blockhash when it is ready.
+    // CHECK2(memcmp(blockhash_ptr, blockhash, SOLANA_BLOCKHASH_SIZE) == 0, ERROR_INVALID_ARG);
+    for (uint8_t i=0; i<num_signers; i++) {
+        uint8_t *tmp_pub_key = pub_key_ptr + i*SOLANA_PUBKEY_SIZE;
+        if (memcmp(tmp_pub_key, pub_key, SOLANA_PUBKEY_SIZE) == 0) {
+            return 0;
+        }
+    }
+    return ERROR_INVALID_ARG;
 exit:
     return err;
 }
