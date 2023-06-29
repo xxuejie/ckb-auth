@@ -1433,9 +1433,14 @@ impl SolanaAuth {
         let key_pair = Arc::new(key_pair);
         Box::new(SolanaAuth { key_pair })
     }
-    pub fn get_pub_key_bytes(key_pair: &solana_sdk::signer::keypair::Keypair) -> Vec<u8> {
+    pub fn get_pub_key(
+        key_pair: &solana_sdk::signer::keypair::Keypair,
+    ) -> solana_sdk::pubkey::Pubkey {
         use solana_sdk::signer::EncodableKeypair;
-        let pub_key: solana_sdk::pubkey::Pubkey = key_pair.encodable_pubkey();
+        key_pair.encodable_pubkey()
+    }
+    pub fn get_pub_key_bytes(key_pair: &solana_sdk::signer::keypair::Keypair) -> Vec<u8> {
+        let pub_key = Self::get_pub_key(key_pair);
         let pub_key = pub_key.to_bytes();
         pub_key.into()
     }
@@ -1472,6 +1477,7 @@ impl Auth for SolanaAuth {
             0x2f, 0x47, 0x40, 0x18, 0x48, 0x2c, 0x01, 0x02, 0x02, 0x00, 0x01, 0x0c, 0x02, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
+        let pub_key = Self::get_pub_key(&self.key_pair);
         let pub_key_buf = Self::get_pub_key_bytes(&self.key_pair);
         let base58_msg = bs58::encode(msg.as_bytes()).into_string();
 
@@ -1504,9 +1510,29 @@ impl Auth for SolanaAuth {
         assert!(output.status.success());
         dbg!(&output);
 
-        let sign_data: solana_cli_output::CliSignOnlyData =
+        let sign_only_data: solana_cli_output::CliSignOnlyData =
             serde_json::from_slice(&output.stdout).expect("Deserialize command output");
-        dbg!(&sign_data);
+        dbg!(&sign_only_data);
+        assert_eq!(sign_only_data.blockhash, base58_msg.as_str());
+        assert!(sign_only_data.message.is_some());
+        let signer_prefix = format!("{pub_key}=");
+        let base58_signature = sign_only_data
+            .signers
+            .iter()
+            .find(|signer| signer.starts_with(&signer_prefix))
+            .map(|signer| signer.strip_prefix(&signer_prefix).unwrap());
+        dbg!(base58_signature);
+        assert!(base58_signature.is_some());
+        let signature = bs58::decode(base58_signature.unwrap())
+            .into_vec()
+            .expect("base58 decode");
+        dbg!(hex::encode(signature));
+
+        use base64::{engine::general_purpose, Engine as _};
+        let message = general_purpose::STANDARD
+            .decode(&sign_only_data.message.unwrap())
+            .expect("Decode message");
+        dbg!(hex::encode(message));
 
         let signature: Vec<u8> = signature_buf
             .iter()
