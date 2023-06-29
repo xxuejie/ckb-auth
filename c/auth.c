@@ -560,8 +560,7 @@ int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_
     const uint8_t *blockhash_ptr = signed_msg + SOLANA_MESSAGE_HEADER_SIZE + pub_key_size;
     hex_dump("blockhash_ptr", blockhash_ptr, SOLANA_BLOCKHASH_SIZE, 0);
     hex_dump("blockhash", blockhash, SOLANA_BLOCKHASH_SIZE, 0);
-    // TODO: properly compare blockhash when it is ready.
-    // CHECK2(memcmp(blockhash_ptr, blockhash, SOLANA_BLOCKHASH_SIZE) == 0, ERROR_INVALID_ARG);
+    CHECK2(memcmp(blockhash_ptr, blockhash, SOLANA_BLOCKHASH_SIZE) == 0, ERROR_INVALID_ARG);
     for (uint8_t i=0; i<num_signers; i++) {
         uint8_t *tmp_pub_key = pub_key_ptr + i*SOLANA_PUBKEY_SIZE;
         if (memcmp(tmp_pub_key, pub_key, SOLANA_PUBKEY_SIZE) == 0) {
