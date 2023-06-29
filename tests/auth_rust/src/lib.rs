@@ -24,7 +24,7 @@ use rand::{distributions::Standard, thread_rng, Rng};
 use secp256k1;
 use serde::{Deserialize, Serialize};
 use sha3::{Digest, Keccak256};
-use std::{collections::HashMap, mem::size_of, result, vec};
+use std::{collections::HashMap, mem::size_of, process::Stdio, result, vec};
 
 use std::{
     process::{Child, Command},
@@ -1473,6 +1473,41 @@ impl Auth for SolanaAuth {
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ];
         let pub_key_buf = Self::get_pub_key_bytes(&self.key_pair);
+        let base58_msg = bs58::encode(msg.as_bytes()).into_string();
+
+        let mut child = Command::new("solana")
+            .args([
+                "transfer",
+                "--from=-",
+                "--output=json",
+                "--dump-transaction-message",
+                "--sign-only",
+                "--blockhash",
+                base58_msg.as_str(),
+                "6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg", // Just a random public key, does not matter
+                "0", // Just a simple amount, does not matter
+            ])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Spawn subprocess");
+
+        let child_stdin = child.stdin.as_mut().unwrap();
+
+        let keypair_json = solana_sdk::signer::keypair::write_keypair(&self.key_pair, child_stdin)
+            .expect("Must write keypair");
+        dbg!(keypair_json);
+        // Close stdin to finish and avoid indefinite blocking
+        drop(child_stdin);
+
+        let output = child.wait_with_output().expect("Wait for output");
+        assert!(output.status.success());
+        dbg!(&output);
+
+        let sign_data: solana_cli_output::CliSignOnlyData =
+            serde_json::from_slice(&output.stdout).expect("Deserialize command output");
+        dbg!(&sign_data);
+
         let signature: Vec<u8> = signature_buf
             .iter()
             .chain(&pub_key_buf)
