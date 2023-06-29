@@ -521,7 +521,13 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
     hex_dump("pub_key", pub_key_buf, sizeof(pub_key_buf), 0);
     hex_dump("signature", signature_buf, sizeof(signature_buf), 0);
     printf("verifying signature\n");
-    int suc = ed25519_verify(signature_buf, msg_buf, sizeof(msg_buf), pub_key_buf);
+
+    CHECK2(sig_len > SOLANA_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    const uint8_t *signature_ptr = sig;
+    const uint8_t *signed_msg_ptr = sig + SOLANA_SIGNATURE_SIZE;
+    size_t signed_msg_len = sig_len - SOLANA_SIGNATURE_SIZE;
+
+    int suc = ed25519_verify(signature_ptr, signed_msg_ptr, signed_msg_len, pub_key_buf);
     printf("verifying signature result: %d\n", suc);
     CHECK2(suc == 1, ERROR_WRONG_STATE);
 
