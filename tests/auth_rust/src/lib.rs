@@ -1519,10 +1519,11 @@ impl Auth for SolanaAuth {
         let bytes = data.freeze();
         bytes
     }
-    // The signature size actually depends on the message signed by solana,
-    // which is dynamically sized.
+    // The "signature" passed to ckb-auth actually contains the message signed by solana,
+    // which in turn contains all the accounts involved and is thus dynamically sized.
+    // We sign a fake data here to obtain the size.
     fn get_sign_size(&self) -> usize {
-        246
+        self.sign(&H256::default()).len()
     }
 }
 
