@@ -1461,6 +1461,8 @@ impl Auth for SolanaAuth {
         let pub_key_buf = Self::get_pub_key_bytes(&self.key_pair);
         let base58_msg = bs58::encode(msg.as_bytes()).into_string();
 
+        // May need to run `solana-keygen new`, otherwise the following error will be reported.
+        // Error: Dynamic program error: No default signer found, run "solana-keygen new -o /home/runner/.config/solana/id.json" to create a new one
         let mut child = Command::new("solana")
             .args([
                 "transfer",

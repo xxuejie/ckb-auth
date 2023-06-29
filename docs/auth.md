@@ -142,11 +142,11 @@ Key parameters:
 
 Key parameters:
 - signature: solana signature
+- public key: the public key of the signer
 - message: the message solana client signed
 
 #### More blockchains Support Are Ongoing ...
 - Ripple
-- Solana
 
 ...
 
