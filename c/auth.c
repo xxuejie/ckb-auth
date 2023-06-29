@@ -393,6 +393,34 @@ size_t write_varint(uint8_t *dest, size_t n) {
     return ptr - dest;
 }
 
+// Read uint16_t from varint buffer
+// See https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/short_vec.rs#L120-L148
+int read_varint_u16(const uint8_t *src, size_t src_size, uint16_t *result) {
+    size_t maximum_full_bytes = sizeof(uint16_t) * 8 / 7;
+    hex_dump("src", src, src_size, 0);
+  
+    uint16_t acc = 0;
+    for (size_t i = 0; i <= maximum_full_bytes; i++) {
+        if (i >= src_size) {
+            return -1;
+        }
+        uint8_t current_value = *(src + i);
+        size_t bits = (i < maximum_full_bytes) ? 7 : sizeof(uint16_t)*8 - maximum_full_bytes*7; 
+        uint8_t maximum_value = (1 << bits) - 1;
+        acc += ((uint16_t)(current_value & maximum_value) << (i*7));
+        printf("%s: current_value %d, bits %d, maximum_value %d, acc %d\n", __func__, current_value, bits, maximum_value, acc);
+        if (current_value < 0x80 && i < maximum_full_bytes) {
+            *result = acc;
+            return 0;
+        } else if (i == maximum_full_bytes && current_value > maximum_value) {
+            // The last byte should not have all zeroes in high bits.
+            return -2;
+        }
+    }
+    *result = acc;
+    return 0;
+}
+
 // Get monero hash digest from message.
 // See
 // https://github.com/monero-project/monero/blob/e06129bb4d1076f4f2cebabddcee09f1e9e30dcc/src/wallet/wallet2.cpp#L12519-L12538
@@ -510,7 +538,15 @@ exit:
 int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_len, const uint8_t *pub_key,
     const uint8_t *blockhash) {
     int err = 0;
-    CHECK2(signed_msg_len > 4, ERROR_INVALID_ARG);
+    // Official solana transaction structure documentation.
+    // [Transactions | Solana Docs](https://docs.solana.com/developing/programming-model/transactions)
+    // See also
+    // https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/message/legacy.rs#L90-L129
+    CHECK2(signed_msg_len > 4 + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    uint8_t num_signers = *signed_msg;
+    uint16_t num_keys = 0;
+    CHECK2(read_varint_u16(signed_msg + 3, signed_msg_len - 3, &num_keys) == 0, ERROR_INVALID_ARG);
+    printf("%s: num_signers %x, num_keys %x\n", __func__, num_signers, num_keys);
 exit:
     return err;
 }
