@@ -299,14 +299,6 @@ fn monero_verify() {
 }
 
 #[test]
-fn solana_verify_one() {
-    let algorithm_type = AlgorithmType::Solana;
-    let auth = auth_builder(algorithm_type, false).unwrap();
-    let run_type = EntryCategoryType::DynamicLinking;
-    unit_test_success(&auth, run_type);
-}
-
-#[test]
 fn solana_verify() {
     unit_test_common(AlgorithmType::Solana);
 }

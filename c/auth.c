@@ -1,5 +1,3 @@
-#include "dump.c"
-
 // clang-format off
 #include "mbedtls/md.h"
 #include "mbedtls/md_internal.h"
@@ -400,7 +398,6 @@ int read_varint_u16(uint8_t **src, size_t src_size, uint16_t *result) {
     size_t maximum_full_bytes = sizeof(uint16_t) * 8 / 7;
   
     uint8_t *ptr = *src;
-    hex_dump("src", ptr, src_size, 0);
     uint16_t acc = 0;
     for (size_t i = 0; i <= maximum_full_bytes; i++) {
         if (i >= src_size) {
@@ -410,7 +407,6 @@ int read_varint_u16(uint8_t **src, size_t src_size, uint16_t *result) {
         size_t bits = (i < maximum_full_bytes) ? 7 : sizeof(uint16_t)*8 - maximum_full_bytes*7; 
         uint8_t maximum_value = (1 << bits) - 1;
         acc += ((uint16_t)(current_value & maximum_value) << (i*7));
-        printf("%s: current_value %d, bits %d, maximum_value %d, acc %d\n", __func__, current_value, bits, maximum_value, acc);
         ptr = ptr + 1;
         if (current_value < 0x80 && i < maximum_full_bytes) {
             *src = ptr;
@@ -552,14 +548,9 @@ int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_
     uint16_t num_keys = 0;
     uint8_t *pub_key_ptr = (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE);
     CHECK2(read_varint_u16(&pub_key_ptr, signed_msg_len - SOLANA_MESSAGE_HEADER_SIZE, &num_keys) == 0, ERROR_INVALID_ARG);
-    printf("%s: num_signers %x, num_keys %x\n", __func__, num_signers, num_keys);
-    hex_dump("pub keys", pub_key_ptr, SOLANA_PUBKEY_SIZE*num_keys, 0);
     size_t pub_key_size = (pub_key_ptr - (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE)) + SOLANA_PUBKEY_SIZE * num_keys;
-    printf("%s: pub_key_size %x, num_keys %x\n", __func__, pub_key_size, num_keys);
     CHECK2(signed_msg_len > SOLANA_MESSAGE_HEADER_SIZE + pub_key_size + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
     const uint8_t *blockhash_ptr = signed_msg + SOLANA_MESSAGE_HEADER_SIZE + pub_key_size;
-    hex_dump("blockhash_ptr", blockhash_ptr, SOLANA_BLOCKHASH_SIZE, 0);
-    hex_dump("blockhash", blockhash, SOLANA_BLOCKHASH_SIZE, 0);
     CHECK2(memcmp(blockhash_ptr, blockhash, SOLANA_BLOCKHASH_SIZE) == 0, ERROR_INVALID_ARG);
     for (uint8_t i=0; i<num_signers; i++) {
         uint8_t *tmp_pub_key = pub_key_ptr + i*SOLANA_PUBKEY_SIZE;
@@ -576,9 +567,6 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
                               size_t sig_len, const uint8_t *msg,
                               size_t msg_len, uint8_t *output,
                               size_t *output_len) {
-    printf("Running %s\n", __func__);
-    hex_dump("sig", sig, sig_len, 0);
-    hex_dump("msg", msg, msg_len, 0);
     int err = 0;
 
     CHECK2(sig_len > SOLANA_SIGNATURE_SIZE, ERROR_INVALID_ARG);
@@ -588,15 +576,10 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
     const uint8_t *signed_msg_ptr = sig + SOLANA_SIGNATURE_SIZE + SOLANA_PUBKEY_SIZE;
     size_t signed_msg_len = sig_len - SOLANA_SIGNATURE_SIZE - SOLANA_PUBKEY_SIZE;
 
-    // TODO: validate signed_msg is from created from msg and pub key here.
     CHECK(validate_solana_signed_message(signed_msg_ptr, signed_msg_len, pub_key_ptr, msg));
 
-    hex_dump("msg", signed_msg_ptr, signed_msg_len, 0);
-    hex_dump("pub_key", pub_key_ptr, SOLANA_PUBKEY_SIZE, 0);
-    hex_dump("signature", signature_ptr, SOLANA_SIGNATURE_SIZE, 0);
 
     int suc = ed25519_verify(signature_ptr, signed_msg_ptr, signed_msg_len, pub_key_ptr);
-    printf("verifying signature result: %d\n", suc);
     CHECK2(suc == 1, ERROR_WRONG_STATE);
 
     blake2b_state ctx;
