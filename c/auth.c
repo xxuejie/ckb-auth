@@ -580,8 +580,6 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
     hex_dump("sig", sig, sig_len, 0);
     hex_dump("msg", msg, msg_len, 0);
     int err = 0;
-    static const uint8_t pub_key_buf[] = {
-      0xfe, 0xeb, 0x64, 0x42, 0xaa, 0xbc, 0x2c, 0x87, 0xeb, 0xf5, 0xf2, 0x36, 0xdb, 0x1f, 0xbf, 0xd4, 0x73, 0xfc, 0x21, 0x44, 0x2d, 0xaf, 0x7b, 0xaa, 0xf2, 0x79, 0x38, 0x15, 0xe8, 0xf2, 0xbd, 0x82 };
 
     CHECK2(sig_len > SOLANA_SIGNATURE_SIZE, ERROR_INVALID_ARG);
     CHECK2(msg_len == SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
@@ -604,7 +602,7 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
     blake2b_state ctx;
     uint8_t pubkey_hash[BLAKE2B_BLOCK_SIZE] = {0};
     blake2b_init(&ctx, BLAKE2B_BLOCK_SIZE);
-    blake2b_update(&ctx, pub_key_buf, sizeof(pub_key_buf));
+    blake2b_update(&ctx, pub_key_ptr, SOLANA_PUBKEY_SIZE);
     blake2b_final(&ctx, pubkey_hash, sizeof(pubkey_hash));
 
     memcpy(output, pubkey_hash, BLAKE160_SIZE);
