@@ -1409,27 +1409,7 @@ pub struct SolanaAuth {
 }
 impl SolanaAuth {
     pub fn new() -> Box<SolanaAuth> {
-        fn get_random_key_pair() -> solana_sdk::signer::keypair::Keypair {
-            let key: [u8; 64] = [
-                121, 214, 18, 82, 167, 45, 237, 61, 0, 92, 54, 190, 156, 122, 71, 32, 105, 1, 9,
-                97, 214, 115, 111, 12, 125, 191, 161, 20, 225, 225, 78, 210, 254, 235, 100, 66,
-                170, 188, 44, 135, 235, 245, 242, 54, 219, 31, 191, 212, 115, 252, 33, 68, 45, 175,
-                123, 170, 242, 121, 56, 21, 232, 242, 189, 130,
-            ];
-            let keypair =
-                solana_sdk::signer::keypair::Keypair::from_bytes(&key).expect("Create key pair");
-            keypair
-        }
-
-        let key_pair = get_random_key_pair();
-        let pub_key = Self::get_pub_key_bytes(&key_pair);
-        let pub_key_buf: &[u8] = &[
-            0xfe, 0xeb, 0x64, 0x42, 0xaa, 0xbc, 0x2c, 0x87, 0xeb, 0xf5, 0xf2, 0x36, 0xdb, 0x1f,
-            0xbf, 0xd4, 0x73, 0xfc, 0x21, 0x44, 0x2d, 0xaf, 0x7b, 0xaa, 0xf2, 0x79, 0x38, 0x15,
-            0xe8, 0xf2, 0xbd, 0x82,
-        ];
-        assert_eq!(pub_key, pub_key_buf);
-
+        let key_pair = solana_sdk::signer::keypair::Keypair::new();
         let key_pair = Arc::new(key_pair);
         Box::new(SolanaAuth { key_pair })
     }
