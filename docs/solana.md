@@ -8,6 +8,51 @@ including transaction hash and other witnesses in this input group)
 with `solana-cli`, and then leverage ckb-auth to check the validity of this signature.
 See [the docs](./auth.md) for more details.
 
+# Generate and verify transaction with ckb-auth-cli
+
+## Get the pub key hash with `parse` sub command.
+Here the argument given to `-a` is the address of solana account
+```
+ckb-auth-cli solana parse -a JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV
+```
+which outputs
+```
+8b4db9387c6ac45ce2cd8fbd6216582c71e3c87f
+```
+## Get the message to sign with `generate` subcommand.
+```
+ckb-auth-cli solana generate -p 8b4db9387c6ac45ce2cd8fbd6216582c71e3c87f
+```
+which outputs the message to sign
+```
+6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC
+```
+## Sign the message with the official solana command
+Run
+```
+solana transfer --from keypair.json --blockhash 6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only
+```
+which outputs
+```
+{
+  "blockhash": "6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC",
+  "message": "AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAV84A3oyN63c4xuTEyosZB9kub/XMY5lYyu5qwy+MkkcBAwIBAgwCAAAAAAAAAAAAAAA=",
+  "signers": [
+    "AztD1uLuwWm9A4tz7a9BKwJaAVMLRny65qFTUhsnFPwF=5qGBBqS3NTs48RtP2e79TCd3BLeUtTEdHKD3YNnasGJfZjS56yxrhjhjWZAjiXCgDmMbCSTi6PzVvrjprvv8h1eU",
+    "JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV=41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM"
+  ]
+}
+```
+Here the string in signers field starts with `JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV` is composed of the public key `JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV` and
+the signature `41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM`.
+The actual message signed is in the message field.
+
+## Verify the signature with `verify` subcommand
+```
+ckb-auth-cli solana verify -a JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV -s 41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM -m AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAV84A3oyN63c4xuTEyosZB9kub/XMY5lYyu5qwy+MkkcBAwIBAgwCAAAAAAAAAAAAAAA=
+```
+This commands return zero if and only if verification succeeded.
+
 # Signing a transaction with solana-cli
 
 ## Downloading the solana binaries

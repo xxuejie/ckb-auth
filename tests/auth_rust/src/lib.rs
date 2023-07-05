@@ -1515,7 +1515,6 @@ impl Auth for SolanaAuth {
             .chain(&message)
             .map(|x| *x)
             .collect();
-        dbg!(hex::encode(&signature));
         let mut data = BytesMut::new();
         data.put(signature.as_slice());
         let bytes = data.freeze();
