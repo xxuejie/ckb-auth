@@ -33,7 +33,7 @@ The functionalities have been ported and implemented in ckb-auth. See [auth](./d
 We also have some tutorials for following blockchains:
 - [litecoin](./docs/litecoin.md)
 - [cardano](./docs/cardano.md)
-- [monero.md](./docs/monero.md)
+- [monero](./docs/monero.md)
 
 ## Build
 
