@@ -37,6 +37,9 @@ mod tests;
 pub const MAX_CYCLES: u64 = std::u64::MAX;
 pub const SIGNATURE_SIZE: usize = 65;
 pub const RNG_SEED: u64 = 42;
+pub const SOLANA_MAXIMUM_UNWRAPPED_SIGNATURE_SIZE: usize = 510;
+pub const SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE: usize =
+    SOLANA_MAXIMUM_UNWRAPPED_SIGNATURE_SIZE + 2;
 
 lazy_static! {
     pub static ref AUTH_DEMO: Bytes = Bytes::from(&include_bytes!("../../../build/auth_demo")[..]);
@@ -1403,6 +1406,11 @@ impl Auth for MoneroAuth {
     }
 }
 
+pub struct SolanaSignature {
+    pub len: u16,
+    pub signature: Vec<u8>,
+}
+
 #[derive(Clone)]
 pub struct SolanaAuth {
     pub key_pair: Arc<solana_sdk::signer::keypair::Keypair>,
@@ -1423,6 +1431,28 @@ impl SolanaAuth {
         let pub_key = Self::get_pub_key(key_pair);
         let pub_key = pub_key.to_bytes();
         pub_key.into()
+    }
+    pub fn wrap_signature(signature: &[u8]) -> Option<[u8; SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE]> {
+        let len = signature.len();
+        if len > SOLANA_MAXIMUM_UNWRAPPED_SIGNATURE_SIZE {
+            return None;
+        }
+        let len = len as u16;
+        let len_bytes = len.to_le_bytes();
+        let mut data = [0u8; SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE];
+        data[..2].copy_from_slice(len_bytes.as_slice());
+        data[2..(signature.len()+2)].copy_from_slice(signature);
+        Some(data)
+    }
+    pub fn unwrap_signature(
+        signature: &[u8; SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE],
+    ) -> Option<&[u8]> {
+        let len_bytes: [u8; 2] = std::convert::TryInto::try_into(&signature[0..2]).unwrap();
+        let len = u16::from_le_bytes(len_bytes) as usize;
+        if len > SOLANA_MAXIMUM_UNWRAPPED_SIGNATURE_SIZE {
+            return None;
+        }
+        Some(&signature[2..(2 + len)])
     }
 }
 impl Auth for SolanaAuth {
@@ -1495,16 +1525,16 @@ impl Auth for SolanaAuth {
             .chain(&message)
             .map(|x| *x)
             .collect();
-        let mut data = BytesMut::new();
-        data.put(signature.as_slice());
-        let bytes = data.freeze();
-        bytes
+        let signature: [u8; SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE] =
+            Self::wrap_signature(&signature).expect("Signature size not too large");
+        signature.to_vec().into()
     }
     // The "signature" passed to ckb-auth actually contains the message signed by solana,
     // which in turn contains all the accounts involved and is thus dynamically sized.
-    // We sign a fake data here to obtain the size.
+    // We set a maximum length for the message here. The "signature" will be a u16 represents
+    // the signature plus the actual signature. The bytes after the signature will not be used.
     fn get_sign_size(&self) -> usize {
-        self.sign(&H256::default()).len()
+        SOLANA_MAXIMUM_WRAPPED_SIGNATURE_SIZE
     }
 }
 

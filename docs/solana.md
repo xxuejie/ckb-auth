@@ -25,31 +25,31 @@ ckb-auth-cli solana generate -p 8b4db9387c6ac45ce2cd8fbd6216582c71e3c87f
 ```
 which outputs the message to sign
 ```
-6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC
+G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon
 ```
 ## Sign the message with the official solana command
 Run
 ```
-solana transfer --from keypair.json --blockhash 6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only
+solana transfer --from keypair.json --blockhash G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only
 ```
 which outputs
 ```
 {
-  "blockhash": "6ukfHkjdBDsbF44dYVU8cTcQG8uzSdja884uHs1eVrdC",
-  "message": "AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAV84A3oyN63c4xuTEyosZB9kub/XMY5lYyu5qwy+MkkcBAwIBAgwCAAAAAAAAAAAAAAA=",
+  "blockhash": "G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon",
+  "message": "AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Nyv8KrEcDP69XRFC/kLeSd3s84+KE4tazVZpduxKgkBAwIBAgwCAAAAAAAAAAAAAAA=",
   "signers": [
-    "AztD1uLuwWm9A4tz7a9BKwJaAVMLRny65qFTUhsnFPwF=5qGBBqS3NTs48RtP2e79TCd3BLeUtTEdHKD3YNnasGJfZjS56yxrhjhjWZAjiXCgDmMbCSTi6PzVvrjprvv8h1eU",
-    "JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV=41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM"
+    "AztD1uLuwWm9A4tz7a9BKwJaAVMLRny65qFTUhsnFPwF=yf3wrfaZQsB37chWZNxhxYtwR6HmgvFRcKPuxoQEyWVc75jv19vbunx7K6Q5BdwPfSBrTR2eWoGn5Ai2cHndPQC",
+    "JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV=yvm9SbU1RorG4Kz6BLRbwmg2JhdZNgbRM1dH4NwBzEqU7UgAnNL41sAVSAp1nVUoXnYzq3qq2TNgDv9SNgb7GpH"
   ]
 }
 ```
 Here the string in signers field starts with `JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV` is composed of the public key `JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV` and
-the signature `41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM`.
+the signature `yvm9SbU1RorG4Kz6BLRbwmg2JhdZNgbRM1dH4NwBzEqU7UgAnNL41sAVSAp1nVUoXnYzq3qq2TNgDv9SNgb7GpH`.
 The actual message signed is in the message field.
 
 ## Verify the signature with `verify` subcommand
 ```
-ckb-auth-cli solana verify -a JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV -s 41paSFS7XgB2FKsuQYWa2ayC5bCCb4WyuYUxb1HALxxpZrU9MP893uZmMcQQ5W1ExDnmuoFhM362aKNuWS1K8iwM -m AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAV84A3oyN63c4xuTEyosZB9kub/XMY5lYyu5qwy+MkkcBAwIBAgwCAAAAAAAAAAAAAAA=
+ckb-auth-cli solana verify -a JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV -s yvm9SbU1RorG4Kz6BLRbwmg2JhdZNgbRM1dH4NwBzEqU7UgAnNL41sAVSAp1nVUoXnYzq3qq2TNgDv9SNgb7GpH -m AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Nyv8KrEcDP69XRFC/kLeSd3s84+KE4tazVZpduxKgkBAwIBAgwCAAAAAAAAAAAAAAA=
 ```
 This commands return zero if and only if verification succeeded.
 
@@ -86,10 +86,10 @@ the command `base58 -d <<< JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV | xxd`
 ([keis/base58](https://github.com/keis/base58) and [xxd(1)](https://linux.die.net/man/1/xxd)required).
 
 ## Signing a message with solana cli
-To sign the message `42562dba645ed5a35a4dd6ec27ebc2c4c6a52adc27cc18c924c32f474018482c`, we need to first obtain
+To sign the message `e0dcaff0aac47033faf574450bf90b792777b3ce3e284e2d6b3559a5dbb12a09`, we need to first obtain
 the base58 encoding of the message, which is `5Tx8F3jgSHx21CbtjwmdaKPLM5tWmreWAnPrbqHomSJF` and then run the command
 ```bash
-solana transfer --from keypair.json --blockhash 5Tx8F3jgSHx21CbtjwmdaKPLM5tWmreWAnPrbqHomSJF 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only
+solana transfer --from keypair.json --blockhash G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only
 ```
 Here we construct a valid transaction with the message embedded as blockhash in the transcaction.
 When this trancation is signed by our private key, ckb-auth will recognize it as a valid transaction.
@@ -99,10 +99,11 @@ as long as the signature is valid and the solana message contains the message we
 The output of the above command is
 ```json
 {
-  "blockhash": "5Tx8F3jgSHx21CbtjwmdaKPLM5tWmreWAnPrbqHomSJF",
-  "message": "AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQlYtumRe1aNaTdbsJ+vCxMalKtwnzBjJJMMvR0AYSCwBAwIBAgwCAAAAAAAAAAAAAAA=",
+  "blockhash": "G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon",
+  "message": "AgABBJSNMEbMgjVcD2BXPvhOXxJU05GvhaDy1fk4eHjaxqwi/utkQqq8LIfr9fI22x+/1HP8IUQtr3uq8nk4FejyvYJTmxv1p8BT0M957h8yk9jMKdP9h5TCYtl0IFgKC5YD/wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA4Nyv8KrEcDP69XRFC/kLeSd3s84+KE4tazVZpduxKgkBAwIBAgwCAAAAAAAAAAAAAAA=",
   "signers": [
-    "JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV=4QkrErPeLZKrrHcrEsh67AFXZ818544wz9QBWAjRm5pcvU8LJFChi4FkTjSRrf4LmonLJqbPfXdM17z2JCJ65bLg"
+    "AztD1uLuwWm9A4tz7a9BKwJaAVMLRny65qFTUhsnFPwF=yf3wrfaZQsB37chWZNxhxYtwR6HmgvFRcKPuxoQEyWVc75jv19vbunx7K6Q5BdwPfSBrTR2eWoGn5Ai2cHndPQC",
+    "JA6jjaAha7SNVryoecCcNTH7vvqwhX8nBDiyAfeP1FcV=yvm9SbU1RorG4Kz6BLRbwmg2JhdZNgbRM1dH4NwBzEqU7UgAnNL41sAVSAp1nVUoXnYzq3qq2TNgDv9SNgb7GpH"
   ]
 }
 ```
@@ -114,21 +115,76 @@ the signature are separated by an equality sign (`=`). Below script shows the co
 public key and signature.
 
 ```bash
-for i in $(solana transfer --blockhash 5Tx8F3jgSHx21CbtjwmdaKPLM5tWmreWAnPrbqHomSJF keypair.json 0 --output json --verbose --dump-transaction-message --sign-only | jq -r '.signers[]' | tr '=' '\n'); do base58 -d <<< "$i" | xxd; echo; done
+for i in $(solana transfer --from keypair.json --blockhash G8mW5A2r4ab8gnmCB4abus21BN8vyMa3hbLg91AcsMon 6dN24Y1wBW66CxLfXbRT9umy1PMed8ZmfMWsghopczFg 0 --output json --verbose --dump-transaction-message --sign-only | jq -r '.signers[]' | tr '=' '\n'); do base58 -d <<< "$i" | xxd; echo; done
 ```
 
 A sample output is
 ```
+00000000: 948d 3046 cc82 355c 0f60 573e f84e 5f12  ..0F..5\.`W>.N_.
+00000010: 54d3 91af 85a0 f2d5 f938 7878 dac6 ac22  T........8xx..."
+
+00000000: 30db a78b 69cf 0aeb 7f2f c18f 05d7 4f1e  0...i..../....O.
+00000010: 1c88 dd6d 70a2 ba81 a978 b847 0bb2 b0f1  ...mp....x.G....
+00000020: 71c5 2dbc eb6b 01b5 bc9b 298d 3235 8898  q.-..k....).25..
+00000030: a346 cacd b51c 5af5 76c7 2bd0 a432 1a09  .F....Z.v.+..2..
+
 00000000: feeb 6442 aabc 2c87 ebf5 f236 db1f bfd4  ..dB..,....6....
 00000010: 73fc 2144 2daf 7baa f279 3815 e8f2 bd82  s.!D-.{..y8.....
 
-00000000: 5757 23e2 4d9f 62bd 516b f33b 3ef0 43d0  WW#.M.b.Qk.;>.C.
-00000010: 52b1 474b 6edb 5534 7042 0788 7737 3091  R.GKn.U4pB..w70.
-00000020: 0471 a5dc 1203 8a05 483b 50b2 24b0 f394  .q......H;P.$...
-00000030: 8900 c0be 9fe3 9cf3 5b3a ff0a 686e c60f  ........[:..hn..
+00000000: 3117 73da 00cc 4133 9d44 eb40 df90 0228  1.s...A3.D.@...(
+00000010: 0d72 2418 04a7 0fff d767 934c b785 6dab  .r$......g.L..m.
+00000020: 1257 2d88 f252 13e5 b755 fae6 f3a8 95ee  .W-..R...U......
+00000030: 3ab7 9bc1 b3b0 1c18 1e57 eaf4 6292 8002  :........W..b...
 ```
 
 ## Required information for ckb-auth to verify the validity of solana signatures
 Ckb-auth requires the signature, public key and message to verify the validity of the signature.
 The signature and public key are contained in the signers of `solana transfer` output,
-and the message correponds to the field message of `solana transfer` output.
+and the message correponds to the field message of `solana transfer` output. 
+Signature, public key and message all together form the witness of this transction.
+Since the size of the witness is not static (as the message is dynamically-sized) and
+its length is relevant in computing transaction hash. We pad the whole witness to a memory region of size
+512. The first part of these memory region is a little-endian `uint16_t` integer represents the length of
+the effective witness. From there follows the actually witness.
+
+For example, here is the witness that will be read by ckb-auth
+```
+00000000: 1601 33f2 9e94 d650 f5de 73b8 4c83 5fa8  ..3....P..s.L._.
+00000010: db2c 1f5a 6854 9594 a778 29e8 45a7 47db  .,.ZhT...x).E.G.
+00000020: 9618 4fd8 0547 c18e 9e58 374a 7360 b905  ..O..G...X7Js`..
+00000030: cb8c 51e0 0023 de84 5957 81b2 13bf 283e  ..Q..#..YW....(>
+00000040: 3905 4c0d 9b63 b23d c285 a21f 75b4 a343  9.L..c.=....u..C
+00000050: e9b7 4ee2 f4eb 79f3 1a4b 721d 1f3d 1f1a  ..N...y..Kr..=..
+00000060: 1c70 0200 0104 948d 3046 cc82 355c 0f60  .p......0F..5\.`
+00000070: 573e f84e 5f12 54d3 91af 85a0 f2d5 f938  W>.N_.T........8
+00000080: 7878 dac6 ac22 4c0d 9b63 b23d c285 a21f  xx..."L..c.=....
+00000090: 75b4 a343 e9b7 4ee2 f4eb 79f3 1a4b 721d  u..C..N...y..Kr.
+000000a0: 1f3d 1f1a 1c70 539b 1bf5 a7c0 53d0 cf79  .=...pS.....S..y
+000000b0: ee1f 3293 d8cc 29d3 fd87 94c2 62d9 7420  ..2...).....b.t
+000000c0: 580a 0b96 03ff 0000 0000 0000 0000 0000  X...............
+000000d0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000000e0: 0000 0000 0000 7e97 cfe1 ffbb 973e ceb7  ......~......>..
+000000f0: 0c3a 11d9 4d6b 2921 718a 5d9c ce46 1c83  .:..Mk)!q.]..F..
+00000100: e2a8 d266 66a3 0103 0201 020c 0200 0000  ...ff...........
+00000110: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000120: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000130: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000140: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000150: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000160: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000170: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000180: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+00000190: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001a0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001b0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001c0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001d0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001e0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+000001f0: 0000 0000 0000 0000 0000 0000 0000 0000  ................
+```
+
+Here the first two bytes 0x1601 = 278 in little endian represents that the length of the whole effective witness buffer.
+Then we have the real signature `33f29e94d650f5de73b84c835fa8db2c1f5a68549594a77829e845a747db96184fd80547c18e9e58374a7360b905cb8c51e00023de84595781b213bf283e3905`,
+followed by the real public key `4c0d9b63b23dc285a21f75b4a343e9b74ee2f4eb79f31a4b721d1f3d1f1a1c70` that is used to sign the message
+`02000104948d3046cc82355c0f60573ef84e5f1254d391af85a0f2d5f9387878dac6ac224c0d9b63b23dc285a21f75b4a343e9b74ee2f4eb79f31a4b721d1f3d1f1a1c70539b1bf5a7c053d0cf79ee1f3293d8cc29d3fd8794c262d97420580a0b9603ff00000000000000000000000000000000000000000000000000000000000000007e97cfe1ffbb973eceb70c3a11d94d6b2921718a5d9cce461c83e2a8d26666a301030201020c020000000000000000000000`.
+The rest of the message is just a padding that is used to ensure signature have fixed length.

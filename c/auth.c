@@ -71,6 +71,8 @@
 #define MONERO_KECCAK_SIZE 32
 #define SOLANA_PUBKEY_SIZE 32
 #define SOLANA_SIGNATURE_SIZE 64
+#define SOLANA_WRAPPED_SIGNATURE_SIZE 512
+#define SOLANA_UNWRAPPED_SIGNATURE_SIZE 510
 #define SOLANA_BLOCKHASH_SIZE 32
 #define SOLANA_MESSAGE_HEADER_SIZE 3
 
@@ -569,11 +571,13 @@ int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
                               size_t *output_len) {
     int err = 0;
 
-    CHECK2(sig_len > SOLANA_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    CHECK2(sig_len == SOLANA_WRAPPED_SIGNATURE_SIZE, ERROR_INVALID_ARG);
     CHECK2(msg_len == SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
-    const uint8_t *signature_ptr = sig;
-    const uint8_t *pub_key_ptr =  sig + SOLANA_SIGNATURE_SIZE;
-    const uint8_t *signed_msg_ptr = sig + SOLANA_SIGNATURE_SIZE + SOLANA_PUBKEY_SIZE;
+    sig_len = (size_t)sig[0] | ((size_t)sig[1] << 8);
+    CHECK2(sig_len <= SOLANA_UNWRAPPED_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    const uint8_t *signature_ptr = sig + 2;
+    const uint8_t *pub_key_ptr =  signature_ptr + SOLANA_SIGNATURE_SIZE;
+    const uint8_t *signed_msg_ptr = signature_ptr + SOLANA_SIGNATURE_SIZE + SOLANA_PUBKEY_SIZE;
     size_t signed_msg_len = sig_len - SOLANA_SIGNATURE_SIZE - SOLANA_PUBKEY_SIZE;
 
     CHECK(validate_solana_signed_message(signed_msg_ptr, signed_msg_len, pub_key_ptr, msg));

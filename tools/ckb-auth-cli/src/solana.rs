@@ -5,7 +5,7 @@ use anyhow::Error;
 use ckb_auth_rs::{
     auth_builder, debug_printer, gen_tx_scripts_verifier, gen_tx_with_pub_key_hash,
     get_message_to_sign, set_signature, AlgorithmType, DummyDataLoader, EntryCategoryType,
-    TestConfig, MAX_CYCLES,
+    SolanaAuth, TestConfig, MAX_CYCLES,
 };
 use ckb_types::bytes::{BufMut, BytesMut};
 use clap::{arg, ArgMatches, Command};
@@ -103,8 +103,9 @@ impl BlockChain for SolanaLock {
         let config = TestConfig::new(&auth, run_type, 1);
         let mut data_loader = DummyDataLoader::new();
         let tx = gen_tx_with_pub_key_hash(&mut data_loader, &config, pubkey_hash.to_vec());
-        let signature = signature.into();
-        let tx = set_signature(tx, &signature);
+        let wrapped_signature =
+            SolanaAuth::wrap_signature(&signature).expect("signature size not too large");
+        let tx = set_signature(tx, &wrapped_signature.to_vec().into());
         let mut verifier = gen_tx_scripts_verifier(tx, data_loader);
 
         verifier.set_debug_printer(debug_printer);
