@@ -39,6 +39,9 @@ tempdir = "0.3.7"
 which = "4.4.0"
 bs58 = "0.5.0"
 anyhow = "1.0.71"
+solana-sdk = { version = "1.16.1" , default-features = false }
+solana-cli-output = { version = "1.16.1", default-features = false }
+serde_json = "1.0.99"
 
 [[bin]]
 name = "ckb-auth-cli"

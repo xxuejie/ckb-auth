@@ -34,6 +34,7 @@ We also have some tutorials for following blockchains:
 - [litecoin](./docs/litecoin.md)
 - [cardano](./docs/cardano.md)
 - [monero](./docs/monero.md)
+- [solana](./docs/solana.md)
 
 ## Build
 

@@ -299,6 +299,11 @@ fn monero_verify() {
 }
 
 #[test]
+fn solana_verify() {
+    unit_test_common(AlgorithmType::Solana);
+}
+
+#[test]
 fn convert_eth_error() {
     #[derive(Clone)]
     struct EthConverFaileAuth(EthereumAuth);

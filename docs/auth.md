@@ -138,9 +138,15 @@ Key parameters:
 - view key: 32 bytes of the public view key
 - pubkey hash: blake160 of (mode || spend key || view key)
 
+#### Solana(algorithm_id=13)
+
+Key parameters:
+- signature: solana signature
+- public key: the public key of the signer
+- message: the message solana client signed
+
 #### More blockchains Support Are Ongoing ...
 - Ripple
-- Solana
 
 ...
 

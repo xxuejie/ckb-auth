@@ -69,6 +69,12 @@
 #define MONERO_SIGNATURE_SIZE 64
 #define MONERO_DATA_SIZE (MONERO_SIGNATURE_SIZE + 1 + MONERO_PUBKEY_SIZE * 2)
 #define MONERO_KECCAK_SIZE 32
+#define SOLANA_PUBKEY_SIZE 32
+#define SOLANA_SIGNATURE_SIZE 64
+#define SOLANA_WRAPPED_SIGNATURE_SIZE 512
+#define SOLANA_UNWRAPPED_SIGNATURE_SIZE 510
+#define SOLANA_BLOCKHASH_SIZE 32
+#define SOLANA_MESSAGE_HEADER_SIZE 3
 
 enum AuthErrorCodeType {
     ERROR_NOT_IMPLEMENTED = 100,
@@ -388,6 +394,36 @@ size_t write_varint(uint8_t *dest, size_t n) {
     return ptr - dest;
 }
 
+// Read uint16_t from varint buffer
+// See https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/short_vec.rs#L120-L148
+int read_varint_u16(uint8_t **src, size_t src_size, uint16_t *result) {
+    size_t maximum_full_bytes = sizeof(uint16_t) * 8 / 7;
+  
+    uint8_t *ptr = *src;
+    uint16_t acc = 0;
+    for (size_t i = 0; i <= maximum_full_bytes; i++) {
+        if (i >= src_size) {
+            return -1;
+        }
+        uint8_t current_value = *ptr;
+        size_t bits = (i < maximum_full_bytes) ? 7 : sizeof(uint16_t)*8 - maximum_full_bytes*7; 
+        uint8_t maximum_value = (1 << bits) - 1;
+        acc += ((uint16_t)(current_value & maximum_value) << (i*7));
+        ptr = ptr + 1;
+        if (current_value < 0x80 && i < maximum_full_bytes) {
+            *src = ptr;
+            *result = acc;
+            return 0;
+        } else if (i == maximum_full_bytes && current_value > maximum_value) {
+            // The last byte should not have all zeroes in high bits.
+            return -2;
+        }
+    }
+    *src = ptr;
+    *result = acc;
+    return 0;
+}
+
 // Get monero hash digest from message.
 // See
 // https://github.com/monero-project/monero/blob/e06129bb4d1076f4f2cebabddcee09f1e9e30dcc/src/wallet/wallet2.cpp#L12519-L12538
@@ -501,6 +537,67 @@ int validate_signature_monero(void *prefilled_data, const uint8_t *sig,
 exit:
     return err;
 }
+
+int validate_solana_signed_message(const uint8_t *signed_msg, size_t signed_msg_len, const uint8_t *pub_key,
+    const uint8_t *blockhash) {
+    int err = 0;
+    // Official solana transaction structure documentation.
+    // [Transactions | Solana Docs](https://docs.solana.com/developing/programming-model/transactions)
+    // See also
+    // https://github.com/solana-labs/solana/blob/3b0b0ba07d345ef86e270187a1a7d99bd0da7f4c/sdk/program/src/message/legacy.rs#L90-L129
+    CHECK2(signed_msg_len > SOLANA_MESSAGE_HEADER_SIZE + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    uint8_t num_signers = *signed_msg;
+    uint16_t num_keys = 0;
+    uint8_t *pub_key_ptr = (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE);
+    CHECK2(read_varint_u16(&pub_key_ptr, signed_msg_len - SOLANA_MESSAGE_HEADER_SIZE, &num_keys) == 0, ERROR_INVALID_ARG);
+    size_t pub_key_size = (pub_key_ptr - (uint8_t *)(signed_msg + SOLANA_MESSAGE_HEADER_SIZE)) + SOLANA_PUBKEY_SIZE * num_keys;
+    CHECK2(signed_msg_len > SOLANA_MESSAGE_HEADER_SIZE + pub_key_size + SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    const uint8_t *blockhash_ptr = signed_msg + SOLANA_MESSAGE_HEADER_SIZE + pub_key_size;
+    CHECK2(memcmp(blockhash_ptr, blockhash, SOLANA_BLOCKHASH_SIZE) == 0, ERROR_INVALID_ARG);
+    for (uint8_t i=0; i<num_signers; i++) {
+        uint8_t *tmp_pub_key = pub_key_ptr + i*SOLANA_PUBKEY_SIZE;
+        if (memcmp(tmp_pub_key, pub_key, SOLANA_PUBKEY_SIZE) == 0) {
+            return 0;
+        }
+    }
+    return ERROR_INVALID_ARG;
+exit:
+    return err;
+}
+
+int validate_signature_solana(void *prefilled_data, const uint8_t *sig,
+                              size_t sig_len, const uint8_t *msg,
+                              size_t msg_len, uint8_t *output,
+                              size_t *output_len) {
+    int err = 0;
+
+    CHECK2(sig_len == SOLANA_WRAPPED_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    CHECK2(msg_len == SOLANA_BLOCKHASH_SIZE, ERROR_INVALID_ARG);
+    sig_len = (size_t)sig[0] | ((size_t)sig[1] << 8);
+    CHECK2(sig_len <= SOLANA_UNWRAPPED_SIGNATURE_SIZE, ERROR_INVALID_ARG);
+    const uint8_t *signature_ptr = sig + 2;
+    const uint8_t *pub_key_ptr =  signature_ptr + SOLANA_SIGNATURE_SIZE;
+    const uint8_t *signed_msg_ptr = signature_ptr + SOLANA_SIGNATURE_SIZE + SOLANA_PUBKEY_SIZE;
+    size_t signed_msg_len = sig_len - SOLANA_SIGNATURE_SIZE - SOLANA_PUBKEY_SIZE;
+
+    CHECK(validate_solana_signed_message(signed_msg_ptr, signed_msg_len, pub_key_ptr, msg));
+
+
+    int suc = ed25519_verify(signature_ptr, signed_msg_ptr, signed_msg_len, pub_key_ptr);
+    CHECK2(suc == 1, ERROR_WRONG_STATE);
+
+    blake2b_state ctx;
+    uint8_t pubkey_hash[BLAKE2B_BLOCK_SIZE] = {0};
+    blake2b_init(&ctx, BLAKE2B_BLOCK_SIZE);
+    blake2b_update(&ctx, pub_key_ptr, SOLANA_PUBKEY_SIZE);
+    blake2b_final(&ctx, pubkey_hash, sizeof(pubkey_hash));
+
+    memcpy(output, pubkey_hash, BLAKE160_SIZE);
+    *output_len = BLAKE160_SIZE;
+exit:
+    return err;
+}
+
 
 int convert_copy(const uint8_t *msg, size_t msg_len, uint8_t *new_msg,
                  size_t new_msg_len) {
@@ -906,6 +1003,10 @@ __attribute__((visibility("default"))) int ckb_auth_validate(
     } else if (auth_algorithm_id == AuthAlgorithmIdMonero) {
         err = verify(pubkey_hash, signature, signature_size, message,
                      message_size, validate_signature_monero, convert_copy);
+        CHECK(err);
+    } else if (auth_algorithm_id == AuthAlgorithmIdSolana) {
+        err = verify(pubkey_hash, signature, signature_size, message,
+                     message_size, validate_signature_solana, convert_copy);
         CHECK(err);
     } else if (auth_algorithm_id == AuthAlgorithmIdOwnerLock) {
         CHECK2(is_lock_script_hash_present(pubkey_hash), ERROR_MISMATCHED);
