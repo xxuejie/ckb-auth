@@ -6,7 +6,7 @@
 	branch = schnorr
 [submodule "deps/ckb-c-stdlib-2023"]
 	path = deps/ckb-c-stdlib-2023
-	url = https://github.com/nervosnetwork/ckb-c-stdlib.git
+	url = https://github.com/xxuejie/ckb-c-stdlib.git
 	branch = master
 [submodule "deps/mbedtls"]
 	path = deps/mbedtls
