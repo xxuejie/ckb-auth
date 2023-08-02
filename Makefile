@@ -9,13 +9,13 @@ LD := ld.lld-16
 OBJCOPY := llvm-objcopy-16
 AR := llvm-ar-16
 
-CFLAGS := --target=riscv64 -march=rv64imc -fPIC -O3 -fno-builtin-printf -fno-builtin-memcmp -nostdinc -nostdlib -fvisibility=hidden -fdata-sections -ffunction-sections -I deps/secp256k1-20210801/src -I deps/secp256k1-20210801 -I deps/ckb-c-stdlib-2023 -I deps/ckb-c-stdlib-2023/libc -I deps/ckb-c-stdlib-2023/molecule -I c -I build -Wall -Werror -Wno-nonnull -Wno-unused-function -Wno-bitwise-instead-of-logical -g
+CFLAGS := --target=riscv64 -march=rv64imc_zba_zbb_zbc_zbs -fPIC -O3 -fno-builtin-printf -fno-builtin-memcmp -nostdinc -nostdlib -fvisibility=hidden -fdata-sections -ffunction-sections -I deps/secp256k1-20210801/src -I deps/secp256k1-20210801 -I deps/ckb-c-stdlib-2023 -I deps/ckb-c-stdlib-2023/libc -I deps/ckb-c-stdlib-2023/molecule -I c -I build -Wall -Werror -Wno-nonnull -Wno-unused-function -Wno-bitwise-instead-of-logical -g
 LDFLAGS := -Wl,--gc-sections
 SECP256K1_SRC_20210801 := deps/secp256k1-20210801/src/ecmult_static_pre_context.h
 AUTH_CFLAGS := $(CFLAGS) -I deps/mbedtls/include -I deps/ed25519/src -I c/cardano/nanocbor -Wno-array-bounds
 
 # RSA/mbedtls
-PASSED_MBEDTLS_CFLAGS := --target=riscv64 -march=rv64imc -O3 -fPIC -nostdinc -nostdlib -DCKB_DECLARATION_ONLY -I ../../ckb-c-stdlib-2023/libc -fdata-sections -ffunction-sections -fvisibility=hidden
+PASSED_MBEDTLS_CFLAGS := --target=riscv64 -march=rv64imc_zba_zbb_zbc_zbs -O3 -fPIC -nostdinc -nostdlib -DCKB_DECLARATION_ONLY -I ../../ckb-c-stdlib-2023/libc -fdata-sections -ffunction-sections -fvisibility=hidden
 
 # docker pull nervos/ckb-riscv-gnu-toolchain:gnu-jammy-20230214
 BUILDER_DOCKER := nervos/ckb-riscv-gnu-toolchain@sha256:d3f649ef8079395eb25a21ceaeb15674f47eaa2d8cc23adc8bcdae3d5abce6ec
